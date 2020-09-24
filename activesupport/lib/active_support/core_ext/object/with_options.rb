@@ -36,6 +36,13 @@ class Object
   #     body    i18n.t :body, user_name: user.name
   #   end
   #
+  # When called with an explicit receiver and without a block, the decorated
+  # receiver is returned:
+  #
+  #   builder = tag.with_options(hidden: true, aria: { hidden: true })
+  #   builder.span("I'm hidden text", id: "hidden-span")
+  #   builder.p("I am too!", id: "hidden-p")
+  #
   # When you don't pass an explicit receiver, it executes the whole block
   # in merging options context:
   #
@@ -77,6 +84,11 @@ class Object
   #
   def with_options(options, &block)
     option_merger = ActiveSupport::OptionMerger.new(self, options)
-    block.arity.zero? ? option_merger.instance_eval(&block) : block.call(option_merger)
+
+    if block_given?
+      block.arity.zero? ? option_merger.instance_eval(&block) : block.call(option_merger)
+    else
+      option_merger
+    end
   end
 end

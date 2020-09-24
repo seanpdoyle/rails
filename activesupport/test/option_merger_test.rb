@@ -96,6 +96,16 @@ class OptionMergerTest < ActiveSupport::TestCase
     assert_equal ActiveSupport::OptionMerger, ActiveSupport::OptionMerger.new("", "").class
   end
 
+  def test_option_merger_explicit_receiver_without_block
+    object = @options.with_options foo: "bar"
+
+    with_fizz = object.merge(fizz: "buzz")
+    with_bar = object.merge(bar: "baz")
+
+    assert_equal({ hello: "world", foo: "bar", fizz: "buzz" }, with_fizz)
+    assert_equal({ hello: "world", foo: "bar", bar: "baz" }, with_bar)
+  end
+
   def test_option_merger_implicit_receiver
     @options.with_options foo: "bar" do
       merge! fizz: "buzz"

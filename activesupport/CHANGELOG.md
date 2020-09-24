@@ -1,3 +1,13 @@
+*   Extend `Object#with_options` to support invocations without a block:
+
+    ```ruby
+    builder = tag.with_options(hidden: true, aria: { hidden: true })
+    builder.span("I'm hidden text", id: "hidden-span")
+    builder.p("I am too!", id: "hidden-p")
+    ```
+
+    *Sean Doyle*
+
 *   ActiveSupport::Subscriber#attach_to now accepts an inherit_from: argument. When set to true,
     it allows a subscriber to receive events for methods defined in the subscriber's ancestor class(es)
 
