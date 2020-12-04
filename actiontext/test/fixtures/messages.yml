@@ -1,2 +1,5 @@
+hello_alice:
+  subject: "Hello, Alice"
+
 hello_world:
   subject: "A greeting"

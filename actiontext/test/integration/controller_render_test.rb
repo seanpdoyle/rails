@@ -24,6 +24,14 @@ class ActionText::ControllerRenderTest < ActionDispatch::IntegrationTest
     assert_select content, "img:match('src', ?)", %r"//loocalhoost/.+/racecar"
   end
 
+  test "resolves ActionText::Attachables based on their to_trix_content_attachment_partial_path" do
+    alice = people(:alice)
+
+    get messages_path
+
+    assert_selector ".mentionable-person[gid=?]", alice.to_gid, text: alice.name
+  end
+
   test "resolves partials when controller is namespaced" do
     blob = create_file_blob(filename: "racecar.jpg", content_type: "image/jpg")
     message = Message.create!(content: ActionText::Content.new.append_attachables(blob))
