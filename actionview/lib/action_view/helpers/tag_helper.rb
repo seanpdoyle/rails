@@ -143,6 +143,7 @@ module ActionView
             attributes = tag_options(options, escape)
 
             document = Nokogiri::HTML::Document.new
+            document.encoding = content.encoding.to_s if content
             element = document.create_element tag_name.to_s.dasherize
             attributes.each { |attribute, value| element[attribute] = CGI.unescapeHTML(value.to_s) } if attributes.present?
             element.inner_html = [PRE_CONTENT_STRINGS[tag_name], content].join
