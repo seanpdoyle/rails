@@ -1,3 +1,8 @@
+*   Invoking `Object#with_options` without a `&block` argument returns the
+    `ActiveSupport::OptionMerger` instance.
+
+    *Sean Doyle*
+
 *   OpenSSL constants are now used for Digest computations.
 
     *Dirkjan Bussink*
