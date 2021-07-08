@@ -1,3 +1,8 @@
+*   Deleting a key from `ActionDispatch::Flash::FlashHash` returns the deleted
+    value, the same way that `Hash#delete` would.
+
+    *Sean Doyle*
+
 *   Deleting an item from the Middleware stack will raise if the item is not found
 
     Previously, calling `config.middleware.delete(ItemNotInMiddleware)` would fail silently.
