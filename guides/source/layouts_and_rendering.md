@@ -283,28 +283,63 @@ TIP: `send_file` is often a faster and better option if a layout isn't required.
 
 #### Rendering Objects
 
-Rails can render objects responding to `#render_in`. The format can be controlled by defining `#format` on the object.
+Rails can render objects that respond to `#render_in`. You can provide the object as the first positional argument or provide it as the `:renderable` option to `render`:
 
 ```ruby
 class Greeting
-  def render_in(view_context)
-    view_context.render html: "Hello, World"
+  def render_in(view_context, **options, &block)
+    if block
+      view_context.render plain: block.call
+    else
+      case Array(options[:formats]).first
+      when :json
+        view_context.render json: { name: options.dig(:locals, :name) }
+      else
+        view_context.render inline: <<~ERB.strip, **options
+          Hello <%= local_assigns.fetch(:name, "World") %>
+        ERB
+      end
+    end
+  end
+end
+
+render Greeting.new
+# => "Hello World"
+
+render renderable: Greeting.new
+# => "Hello World"
+
+render Greeting.new, name: "Rails"
+# => "Hello Rails"
+
+render renderable: Greeting.new, locals: { name: "Rails" }
+# => "Hello Rails"
+
+render renderable: Greeting.new, formats: :json
+# => "{\"name\":\"World\"}"
+
+render renderable: Greeting.new, locals: { name: "Rails" }, formats: :json
+# => "{\"name\":\"Rails\"}"
+```
+
+If the format is known ahead of rendering, control it by defining `#format` on the object:
+
+```ruby
+class Greeting
+  def render_in(view_context, **options, &block)
+    if block
+      view_context.render html: block.call
+    else
+      view_context.render inline: <<~ERB, **options
+        Hello <%= local_assigns.fetch(:name, "World") %>
+      ERB
+    end
   end
 
   def format
     :html
   end
 end
-
-render Greeting.new
-# => "Hello World"
-```
-
-This calls `render_in` on the provided object with the current view context. You can also provide the object by using the `:renderable` option to `render`:
-
-```ruby
-render renderable: Greeting.new
-# => "Hello World"
 ```
 
 #### Options for `render`

@@ -1,3 +1,30 @@
+*   Accept render options and block in `render_to_string` calls made with `:renderable`
+
+    ```ruby
+    class Greeting
+      def render_in(view_context, locals: {}, formats: nil, &block)
+        if block
+          view_context.render plain: block.call
+        else
+          case Array(formats).first
+          when :json
+            view_context.render plain: { greeting: "Hello, #{locals.fetch(:name, "World")}!" }.to_json
+          else
+            view_context.render inline: <<~ERB.strip, locals: locals
+              Hello, <%= local_assigns.fetch(:name, "World") %>!
+            ERB
+          end
+        end
+      end
+    end
+
+    ApplicationController.render(Greeting.new, name: "Local")               # => "Hello, Local!"
+    ApplicationController.render(Greeting.new) { "Hello, Block!" }          # => "Hello, Block!"
+    ApplicationController.render(renderable: Greeting.new, formats: :json)  # => "{\"greeting\":\"Hello, World!\"}"
+    ```
+
+    *Sean Doyle*
+
 *   Add `allow_browser` to set minimum browser versions for the application.
 
     A browser that's blocked will by default be served the file in `public/426.html` with a HTTP status code of "426 Upgrade Required".

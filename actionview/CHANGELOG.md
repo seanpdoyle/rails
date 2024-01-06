@@ -1,3 +1,32 @@
+*   Pass render options and block to calls to `#render_in`
+
+    ```ruby
+    class Greeting
+      def render_in(view_context, locals: {}, formats: nil, **options, &block)
+        if block
+          view_context.render plain: block.call
+        else
+          case Array(formats).first
+          when :json
+            json = { greeting: "Hello, #{locals.fetch(:name, "World")}!" }
+
+            view_context.render plain: json.to_json
+          else
+            view_context.render inline: <<~ERB.strip, locals: locals
+              Hello, <%= local_assigns.fetch(:name, "World") %>!
+            ERB
+          end
+        end
+      end
+    end
+
+    render(Greeting.new, name: "Local")               # => "Hello, Local!"
+    render(Greeting.new) { "Hello, Block!" }          # => "Hello, Block!"
+    render(renderable: Greeting.new, formats: :json)  # => "{\"greeting\":\"Hello, World!\"}"
+    ```
+
+    *Sean Doyle*
+
 *   Add the `nonce: true` option for `stylesheet_link_tag` helper to support automatic nonce generation for Content Security Policy.
     Works the same way as `javascript_include_tag nonce: true` does.
 

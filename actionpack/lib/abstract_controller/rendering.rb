@@ -42,11 +42,11 @@ module AbstractController
     # needs to be overridden in order to still return a string.
     def render_to_string(*args, &block)
       options = _normalize_render(*args, &block)
-      render_to_body(options)
+      render_to_body(options, &block)
     end
 
     # Performs the actual template rendering.
-    def render_to_body(options = {})
+    def render_to_body(options = {}, &block)
     end
 
     # Returns +Content-Type+ of rendered content.

@@ -77,6 +77,40 @@ class RendererTest < ActiveSupport::TestCase
       %(Hello, World!),
       renderer.render(renderable: TestRenderable.new)
     )
+    assert_equal(
+      %(Hello, Local!),
+      renderer.render(TestRenderable.new, name: "Local")
+    )
+    assert_equal(
+      %(Hello, Local!),
+      renderer.render(renderable: TestRenderable.new, locals: { name: "Local" })
+    )
+  end
+
+  test "render a renderable object with :formats" do
+    renderer = ApplicationController.renderer
+
+    assert_equal(
+      { greeting: "Hello, World!" }.to_json,
+      renderer.render(renderable: TestRenderable.new, formats: :json)
+    )
+    assert_equal(
+      { greeting: "Hello, Local!" }.to_json,
+      renderer.render(renderable: TestRenderable.new, locals: { name: "Local" }, formats: :json)
+    )
+  end
+
+  test "render a renderable object with block" do
+    renderer = ApplicationController.renderer
+
+    assert_equal(
+      %(Goodbye, World!),
+      renderer.render(TestRenderable.new) { "Goodbye, World!" }
+    )
+    assert_equal(
+      %(Goodbye, World!),
+      renderer.render(renderable: TestRenderable.new) { "Goodbye, World!" }
+    )
   end
 
   test "rendering with custom env" do

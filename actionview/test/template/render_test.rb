@@ -375,9 +375,47 @@ module RenderTestCases
     assert_equal "NilClass", @view.render(partial: "test/klass", object: nil)
   end
 
+  def test_render_renderable_object_without_block_without_options_deprecated
+    renderable = Object.new
+    def renderable.render_in(view_context)
+    end
+
+    assert_deprecated "without options", ActionView.deprecator do
+      @view.render renderable
+    end
+  end
+
+  def test_render_renderable_object_with_block_without_options_deprecated
+    renderable = Object.new
+    def renderable.render_in(view_context, &block)
+    end
+
+    assert_deprecated "without options", ActionView.deprecator do
+      @view.render renderable
+    end
+  end
+
   def test_render_renderable_render_in
     assert_equal "Hello, World!", @view.render(TestRenderable.new)
     assert_equal "Hello, World!", @view.render(renderable: TestRenderable.new)
+
+    assert_equal "Hello, Renderable!", @view.render(TestRenderable.new, name: "Renderable")
+    assert_equal "Hello, Renderable!", @view.render(renderable: TestRenderable.new, locals: { name: "Renderable" })
+
+    assert_equal "Goodbye, Block!", @view.render(TestRenderable.new) { "Goodbye, Block!" }
+    assert_equal "Goodbye, Block!", @view.render(renderable: TestRenderable.new) { "Goodbye, Block!" }
+
+    assert_equal({ greeting: "Hello, World!" }.to_json, @view.render(renderable: TestRenderable.new, formats: :json))
+  end
+
+  def test_render_renderable_render_in_excludes_renderable_key
+    renderable = Object.new
+    def renderable.render_in(view_context, **options)
+      view_context.render plain: options.to_s, **options
+    end
+    options = { formats: :html, locals: { a: true, b: false } }
+
+    assert_equal options.to_s, @view.render(renderable: renderable, **options)
   end
 
   def test_render_object_different_name
