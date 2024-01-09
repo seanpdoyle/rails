@@ -41,7 +41,13 @@ module ActionView
           end
           Template::Inline.new(options[:inline], "inline template", handler, locals: keys, format: format)
         elsif options.key?(:renderable)
-          Template::Renderable.new(options[:renderable], &block)
+          renderable = options[:renderable]
+
+          unless renderable.respond_to?(:render_in)
+            raise ArgumentError, "'#{renderable.inspect}' is not a renderable object. It must implement #render_in."
+          end
+
+          Template::Renderable.new(renderable, &block)
         elsif options.key?(:template)
           if options[:template].respond_to?(:render)
             options[:template]
