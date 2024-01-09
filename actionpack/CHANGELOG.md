@@ -1,26 +1,21 @@
-*   Accept render options and block in `render_to_string` calls made with `:renderable`
+*   Accept render options and block in `render` calls made with `:renderable`
 
     ```ruby
     class Greeting
-      def render_in(view_context, locals: {}, formats: nil, &block)
+      def render_in(view_context, **options, &block)
         if block
-          view_context.render plain: block.call
+          view_context.render html: block.call
         else
-          case Array(formats).first
-          when :json
-            view_context.render plain: { greeting: "Hello, #{locals.fetch(:name, "World")}!" }.to_json
-          else
-            view_context.render inline: <<~ERB.strip, locals: locals
-              Hello, <%= local_assigns.fetch(:name, "World") %>!
-            ERB
-          end
-        end
+          view_context.render inline: <<~ERB.strip, **options
+            Hello, <%= local_assigns.fetch(:name, "World") %>!
+          ERB
       end
     end
 
-    ApplicationController.render(Greeting.new, name: "Local")               # => "Hello, Local!"
-    ApplicationController.render(Greeting.new) { "Hello, Block!" }          # => "Hello, Block!"
-    ApplicationController.render(renderable: Greeting.new, formats: :json)  # => "{\"greeting\":\"Hello, World!\"}"
+    ApplicationController.render(Greeting.new)                                        # => "Hello, World!"
+    ApplicationController.render(Greeting.new) { "Hello, Block!" }                    # => "Hello, Block!"
+    ApplicationController.render(renderable: Greeting.new)                            # => "Hello, World!"
+    ApplicationController.render(renderable: Greeting.new, locals: { name: "Local" }) # => "Hello, Local!"
     ```
 
     *Sean Doyle*

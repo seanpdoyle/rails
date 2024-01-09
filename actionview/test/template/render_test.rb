@@ -396,24 +396,22 @@ module RenderTestCases
   end
 
   def test_render_renderable_render_in
-    assert_equal "Hello, World!", @view.render(TestRenderable.new)
-    assert_equal "Hello, World!", @view.render(renderable: TestRenderable.new)
+    assert_equal "<h1>Hello, World!</h1>", @view.render(TestRenderable.new)
+    assert_equal "<h1>Hello, World!</h1>", @view.render(renderable: TestRenderable.new)
 
-    assert_equal "Hello, Renderable!", @view.render(TestRenderable.new, name: "Renderable")
-    assert_equal "Hello, Renderable!", @view.render(renderable: TestRenderable.new, locals: { name: "Renderable" })
+    assert_equal "<h1>Hello, Renderable!</h1>", @view.render(TestRenderable.new, name: "Renderable")
+    assert_equal "<h1>Hello, Renderable!</h1>", @view.render(renderable: TestRenderable.new, locals: { name: "Renderable" })
 
-    assert_equal "Goodbye, Block!", @view.render(TestRenderable.new) { "Goodbye, Block!" }
-    assert_equal "Goodbye, Block!", @view.render(renderable: TestRenderable.new) { "Goodbye, Block!" }
-
-    assert_equal({ greeting: "Hello, World!" }.to_json, @view.render(renderable: TestRenderable.new, formats: :json))
+    assert_equal "<h1>Goodbye, Block!</h1>", @view.render(TestRenderable.new) { @view.tag.h1 "Goodbye, Block!" }
+    assert_equal "<h1>Goodbye, Block!</h1>", @view.render(renderable: TestRenderable.new) { @view.tag.h1 "Goodbye, Block!" }
   end
 
   def test_render_renderable_render_in_excludes_renderable_key
     renderable = Object.new
     def renderable.render_in(view_context, **options)
-      view_context.render plain: options.to_s, **options
+      view_context.render plain: options, **options
     end
-    options = { formats: :html, locals: { a: true, b: false } }
+    options = { locals: { a: true, b: false } }
 
     assert_equal options.to_s, @view.render(renderable: renderable, **options)
   end
@@ -801,7 +799,7 @@ module RenderTestCases
 
   def test_render_object
     assert_equal(
-      %(Hello, World!),
+      %(<h1>Hello, World!</h1>),
       @view.render(TestRenderable.new)
     )
   end

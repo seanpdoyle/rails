@@ -4,9 +4,8 @@ module ActionView
   class Template
     # = Action View Renderable Template for objects that respond to #render_in
     class Renderable # :nodoc:
-      def initialize(renderable, formats, &block)
+      def initialize(renderable, &block)
         @renderable = renderable
-        @formats = formats
         @block = block
       end
 
@@ -25,14 +24,14 @@ module ActionView
 
             {}
           else
-            { formats: @formats, locals: locals }
+            { locals: locals }
           end
 
         @renderable.render_in(context, **options, &@block)
       end
 
       def format
-        @renderable.try(:format) || Array(@formats).first
+        @renderable.try(:format)
       end
     end
   end

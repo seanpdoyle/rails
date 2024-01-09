@@ -289,52 +289,33 @@ Rails can render objects that respond to `#render_in`. You can provide the objec
 class Greeting
   def render_in(view_context, **options, &block)
     if block
-      view_context.render plain: block.call
+      view_context.render html: block.call
     else
-      case Array(options[:formats]).first
-      when :json
-        view_context.render json: { name: options.dig(:locals, :name) }
-      else
-        view_context.render inline: <<~ERB.strip, **options
-          Hello <%= local_assigns.fetch(:name, "World") %>
-        ERB
-      end
+      view_context.render inline: <<~ERB.strip, **options
+        <h1>Hello <%= local_assigns.fetch(:name, "World") %>!</h1>
+      ERB
     end
   end
 end
 
 render Greeting.new
-# => "Hello World"
+# => "<h1>Hello World!</h1>"
 
 render renderable: Greeting.new
-# => "Hello World"
+# => "<h1>Hello World!</h1>"
 
 render Greeting.new, name: "Rails"
-# => "Hello Rails"
+# => "<h1>Hello Rails!</h1>"
 
 render renderable: Greeting.new, locals: { name: "Rails" }
-# => "Hello Rails"
-
-render renderable: Greeting.new, formats: :json
-# => "{\"name\":\"World\"}"
-
-render renderable: Greeting.new, locals: { name: "Rails" }, formats: :json
-# => "{\"name\":\"Rails\"}"
+# => "<h1>Hello Rails!</h1>"
 ```
 
 If the format is known ahead of rendering, control it by defining `#format` on the object:
 
 ```ruby
 class Greeting
-  def render_in(view_context, **options, &block)
-    if block
-      view_context.render html: block.call
-    else
-      view_context.render inline: <<~ERB, **options
-        Hello <%= local_assigns.fetch(:name, "World") %>
-      ERB
-    end
-  end
+  # …
 
   def format
     :html

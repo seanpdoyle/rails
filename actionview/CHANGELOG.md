@@ -2,27 +2,21 @@
 
     ```ruby
     class Greeting
-      def render_in(view_context, locals: {}, formats: nil, **options, &block)
+      def render_in(view_context, **options, &block)
         if block
-          view_context.render plain: block.call
+          view_context.render html: block.call
         else
-          case Array(formats).first
-          when :json
-            json = { greeting: "Hello, #{locals.fetch(:name, "World")}!" }
-
-            view_context.render plain: json.to_json
-          else
-            view_context.render inline: <<~ERB.strip, locals: locals
-              Hello, <%= local_assigns.fetch(:name, "World") %>!
-            ERB
-          end
+          view_context.render inline: <<~ERB.strip, **options
+            Hello, <%= local_assigns.fetch(:name, "World") %>!
+          ERB
         end
       end
     end
 
-    render(Greeting.new, name: "Local")               # => "Hello, Local!"
-    render(Greeting.new) { "Hello, Block!" }          # => "Hello, Block!"
-    render(renderable: Greeting.new, formats: :json)  # => "{\"greeting\":\"Hello, World!\"}"
+    render(Greeting.new)                                        # => "Hello, World!"
+    render(Greeting.new, name: "Local")                         # => "Hello, Local!"
+    render(renderable: Greeting.new, locals: { name: "Local" }) # => "Hello, Local!"
+    render(Greeting.new) { "Hello, Block!" }                    # => "Hello, Block!"
     ```
 
     *Sean Doyle*

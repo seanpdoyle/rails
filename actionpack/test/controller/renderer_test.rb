@@ -87,29 +87,16 @@ class RendererTest < ActiveSupport::TestCase
     )
   end
 
-  test "render a renderable object with :formats" do
-    renderer = ApplicationController.renderer
-
-    assert_equal(
-      { greeting: "Hello, World!" }.to_json,
-      renderer.render(renderable: TestRenderable.new, formats: :json)
-    )
-    assert_equal(
-      { greeting: "Hello, Local!" }.to_json,
-      renderer.render(renderable: TestRenderable.new, locals: { name: "Local" }, formats: :json)
-    )
-  end
-
   test "render a renderable object with block" do
     renderer = ApplicationController.renderer
 
     assert_equal(
-      %(Goodbye, World!),
-      renderer.render(TestRenderable.new) { "Goodbye, World!" }
+      %(<h1>Goodbye, World!</h1>),
+      renderer.render(TestRenderable.new) { "<h1>Goodbye, World!</h1>".html_safe }
     )
     assert_equal(
-      %(Goodbye, World!),
-      renderer.render(renderable: TestRenderable.new) { "Goodbye, World!" }
+      %(<h1>Goodbye, World!</h1>),
+      renderer.render(renderable: TestRenderable.new) { "<h1>Goodbye, World!</h1>".html_safe }
     )
   end
 

@@ -46,7 +46,7 @@ module ActionController
     #         view_context.render html: block.call
     #       else
     #         view_context.render inline: <<~ERB.strip, **options
-    #           <%= Hello, <%= local_assigns.fetch(:name, "World") %>
+    #           <h1><%= Hello, <%= local_assigns.fetch(:name, "World") %></h1>
     #         ERB
     #       end
     #     end
@@ -56,28 +56,12 @@ module ActionController
     #     end
     #   end
     #
-    #   render(Greeting.new)                                        # => "Hello, World"
-    #   render(renderable: Greeting.new)                            # => "Hello, World"
-    #   render(Greeting.new, name: "Local")                         # => "Hello, Local"
-    #   render(renderable: Greeting.new, locals: { name: "Local" }) # => "Hello, Local"
-    #   render(Greeting.new) { "Hello, Block" }                     # => "Hello, Block"
-    #   render(renderable: Greeting.new) { "Hello, Block" }         # => "Hello, Block"
-    #
-    #   class Greeting
-    #     def render_in(view_context)
-    #       view_context.render html: "<h1>Hello, World</h1>"
-    #     end
-    #
-    #     def format
-    #       :html
-    #     end
-    #   end
-    #
-    #   render(Greeting.new)
-    #   # => "<h1>Hello, World</h1>"
-    #
-    #   render(renderable: Greeting.new)
-    #   # => "<h1>Hello, World</h1>"
+    #   render(Greeting.new)                                        # => "<h1>Hello, World</h1>"
+    #   render(renderable: Greeting.new)                            # => "<h1>Hello, World</h1>"
+    #   render(Greeting.new, name: "Local")                         # => "<h1>Hello, Local</h1>"
+    #   render(renderable: Greeting.new, locals: { name: "Local" }) # => "<h1>Hello, Local</h1>"
+    #   render(Greeting.new) { "<h1>Hello, Block</h1>" }            # => "<h1>Hello, Block</h1>"
+    #   render(renderable: Greeting.new) { "<h1>Hello, Block<h1>" } # => "<h1>Hello, Block</h1>"
     #
     # ==== \Rendering Mode
     #
@@ -142,7 +126,7 @@ module ActionController
     #     # => renders "<h1>Hello, World</h1>"
     #
     #     render renderable: Greeting.new, locals: { name: "Local" }
-    #     # => renders "Hello, Local"
+    #     # => renders "<h1>Hello, Local</h1>"
     #
     # By default, when a rendering mode is specified, no layout template is
     # rendered.
