@@ -1,6 +1,7 @@
-(function(factory) {
-  typeof define === "function" && define.amd ? define(factory) : factory();
-})((function() {
+(function(global, factory) {
+  typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define([ "exports" ], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, 
+  factory(global.ActionText = {}));
+})(this, (function(exports) {
   "use strict";
   var sparkMd5 = {
     exports: {}
@@ -855,10 +856,10 @@
   }
   setTimeout(autostart, 1);
   class AttachmentUpload {
-    constructor(attachment, element) {
-      this.attachment = attachment;
-      this.element = element;
-      this.directUpload = new DirectUpload(attachment.file, this.directUploadUrl, this);
+    constructor(delegate, file) {
+      this.delegate = delegate;
+      this.file = file;
+      this.directUpload = new DirectUpload(file, this.directUploadUrl, this);
     }
     start() {
       this.directUpload.create(this.directUploadDidComplete.bind(this));
@@ -942,17 +943,27 @@
       }
     }
     get directUploadUrl() {
-      return this.element.dataset.directUploadUrl;
+      return this.delegate.directUploadUrl;
     }
     get blobUrlTemplate() {
-      return this.element.dataset.blobUrlTemplate;
+      return this.delegate.blobUrlTemplate;
     }
   }
   addEventListener("trix-attachment-add", (event => {
     const {attachment: attachment, target: target} = event;
     if (attachment.file) {
-      const upload = new AttachmentUpload(attachment, target);
+      const delegate = {
+        directUploadUrl: target.dataset.directUploadUrl,
+        blobUrlTemplate: target.dataset.blobUrlTemplate,
+        setUploadProgress: progress => attachment.setUploadProgress(progress),
+        uploadDidComplete: attributes => attachment.setAttributes(attributes)
+      };
+      const upload = new AttachmentUpload(delegate, attachment.file);
       upload.start();
     }
   }));
+  exports.AttachmentUpload = AttachmentUpload;
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 }));
