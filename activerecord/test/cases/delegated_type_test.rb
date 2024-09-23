@@ -96,6 +96,24 @@ class DelegatedTypeTest < ActiveRecord::TestCase
     assert_nil @uuid_entry_with_comment.uuid_message_uuid
   end
 
+  test "association inverse_of" do
+    with_automatic_delegated_type_inversing(
+      model_class: Entry,
+      setup: -> { delegated_type :entryable, types: %w[ Message ] },
+      teardown: -> { delegated_type :entryable, types: %w[ Message Comment ] }
+    ) do
+      entryable = Message.new(subject: "Hello world!")
+      entry = Entry.create!(entryable: entryable, account: accounts(:signals37))
+
+      created = entry.message
+      updated = entry.build_entryable subject: "Goodbye world!"
+
+      assert_changes -> { entry.reload.message }, from: created, to: updated do
+        updated.save!
+      end
+    end
+  end
+
   test "touch account" do
     previous_account_updated_at  = @entry_with_message.account.updated_at
     previous_entry_updated_at    = @entry_with_message.updated_at
@@ -113,5 +131,16 @@ class DelegatedTypeTest < ActiveRecord::TestCase
   test "builder method" do
     assert_respond_to Entry.new, :build_entryable
     assert_equal Message, Entry.new(entryable_type: "Message").build_entryable.class
+  end
+
+  def with_automatic_delegated_type_inversing(model_class:, setup: :itself, teardown: setup)
+    old_value = model_class.automatic_scope_inversing
+    model_class.automatic_scope_inversing = true
+    capture_io { model_class.instance_exec(&setup) }
+
+    yield
+  ensure
+    model_class.automatic_scope_inversing = old_value
+    capture_io { model_class.instance_exec(&teardown) }
   end
 end
