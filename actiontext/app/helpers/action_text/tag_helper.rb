@@ -26,14 +26,15 @@ module ActionText
     #     # <input type="hidden" name="content" id="trix_input_post_1">
     #     # <trix-editor id="content" input="trix_input_post_1" class="trix-content" ...></trix-editor>
     def rich_textarea_tag(name, value = nil, options = {})
-      editor = options.delete(:editor) { RichText.editor }
       options = options.symbolize_keys
 
+      options[:name] ||= name
+      options[:value] ||= value
       options[:data] ||= {}
       options[:data][:direct_upload_url] ||= main_app.rails_direct_uploads_url
       options[:data][:blob_url_template] ||= main_app.rails_service_blob_url(":signed_id", ":filename")
 
-      editor.rich_text_area_tag(self, name, value, options)
+      render ActionText.editor.editor_tag(options)
     end
     alias_method :rich_text_area_tag, :rich_textarea_tag
   end

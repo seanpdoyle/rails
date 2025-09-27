@@ -53,11 +53,11 @@ module ActionText
         end
 
         def to_trix_content_attachment_partial_path
-          nil
+          to_editor_content_attachment_partial_path
         end
         deprecate :to_trix_content_attachment_partial_path, deprecator: ActionText.deprecator
 
-        def to_editor_content_attachment_partial_path(editor_name)
+        def to_editor_content_attachment_partial_path
           nil
         end
       end
@@ -72,27 +72,13 @@ module ActionText
     end
 
     initializer "action_text.editors" do |app|
-      default_config_file = root.join("config/rich_text.yml")
+      require "action_text/trix_editor"
 
-      ActiveSupport.on_load(:action_text_rich_text) do
-        require "action_text/editor/registry"
+      ActionText.editors = ActiveSupport::InheritableOptions.new(app.config.action_text.editors)
+      ActionText.editors.trix = ActionText::TrixEditor.new
 
-        configs = app.config.action_text.editor_configurations ||=
-          begin
-            config_files = [
-              app.root.join("config/rich_text/#{Rails.env}.yml"),
-              app.root.join("config/rich_text.yml"),
-              default_config_file
-            ]
-
-            ActiveSupport::ConfigurationFile.parse(config_files.detect(&:exist?))
-          end
-
-        self.editors = ActionText::Editor::Registry.new(configs)
-
-        if (name = app.config.action_text.editor)
-          self.editor = editors.fetch(name)
-        end
+      if (name = app.config.action_text.editor)
+        ActionText.editor = ActionText.editors.fetch(name)
       end
     end
 

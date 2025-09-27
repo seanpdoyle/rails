@@ -18,8 +18,6 @@ module ActionText
   autoload :Attachment
   autoload :Attribute
   autoload :Content
-  autoload :Editor
-  autoload :EditorAttachment
   autoload :Encryption
   autoload :Fragment
   autoload :FixtureSet
@@ -45,6 +43,9 @@ module ActionText
     autoload :Minification
     autoload :TrixConversion
   end
+
+  mattr_accessor :editors, default: {}.freeze
+  mattr_accessor :editor
 
   class << self
     def html_document_class

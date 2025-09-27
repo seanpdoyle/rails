@@ -9,15 +9,27 @@ module ActionText
     module Conversion # :nodoc:
       extend ActiveSupport::Concern
 
-      def to_editor_attachment(editor_name, content = editor_attachment_content(editor_name))
-        attributes = full_attributes.dup
-        attributes["content"] = content if content
-        RichText.editors.fetch(editor_name).attachment_from_attributes(attributes)
+      class_methods do
+        def fragment_by_converting_editor_attachments(content)
+          ActionText.editor.to_action_text_html(content)
+        end
+      end
+
+      def to_editor_html(...)
+        dup.to_editor_html!(...)
+      end
+
+      def to_editor_html!(content = editor_attachment_content) # :nodoc:
+        node["content"] = content if content
+        ActionText.editor.to_editor_html(to_html)
       end
 
       private
-        def editor_attachment_content(editor_name)
-          if partial_path = attachable.try(:to_editor_content_attachment_partial_path, editor_name)
+        def editor_attachment_content
+          if partial_path = (
+              attachable.try(:to_editor_content_attachment_partial_path) ||
+              ActionText.deprecator.silence { attachable.try(:to_trix_content_attachment_partial_path) }
+            )
             ActionText::Content.render(partial: partial_path, formats: :html, object: self, as: model_name.element)
           end
         end

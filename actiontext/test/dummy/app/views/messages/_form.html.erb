@@ -24,7 +24,7 @@
           Mention <%= person.name %>
 
           <%= tag.template(
-            render(partial: person.to_editor_content_attachment_partial_path(ActionText::RichText.editor.name), object: person, as: :person),
+            render(partial: person.to_editor_content_attachment_partial_path, object: person, as: :person),
             data: { action_text_attachment: { sgid: person.attachable_sgid } }
           ) %>
         </button>

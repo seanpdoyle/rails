@@ -12,8 +12,35 @@ module ActionText
 
       class_option :editor, type: :string, default: "trix"
 
-      def install_action_text
-        say "Installing Action Text JavaScript dependency", :green
+      def install_editor
+        editor = options[:editor]
+
+        say "Installing #{editor} JavaScript dependency", :green
+        if using_bun?
+          run "bun add #{editor}"
+        elsif using_node?
+          run "yarn add #{editor}"
+        end
+      end
+
+      def append_editor
+        destination = Pathname(destination_root)
+
+        if (application_javascript_path = destination.join("app/javascript/application.js")).exist?
+          insert_into_file application_javascript_path.to_s, %(\nimport "#{trix}"\n)
+        else
+          say <<~INSTRUCTIONS, :green
+            You must import the #{trix} JavaScript module in your application entrypoint.
+          INSTRUCTIONS
+        end
+
+        if (importmap_path = destination.join("config/importmap.rb")).exist?
+          append_to_file importmap_path.to_s, %(pin "#{trix}"\n)
+        end
+      end
+
+      def install_javascript_dependencies
+        say "Installing JavaScript dependencies", :green
         if using_bun?
           run "bun add @rails/actiontext"
         elsif using_node?
@@ -21,36 +48,7 @@ module ActionText
         end
       end
 
-      def install_editor
-        return unless options[:editor] == "trix"
-
-        say "Installing Trix JavaScript dependency", :green
-        if using_bun?
-          run "bun add trix"
-        elsif using_node?
-          run "yarn add trix"
-        end
-      end
-
-      def append_editor
-        return unless options[:editor] == "trix"
-
-        destination = Pathname(destination_root)
-
-        if (application_javascript_path = destination.join("app/javascript/application.js")).exist?
-          insert_into_file application_javascript_path.to_s, %(\nimport "trix"\n)
-        else
-          say <<~INSTRUCTIONS, :green
-            You must import the trix JavaScript module in your application entrypoint.
-          INSTRUCTIONS
-        end
-
-        if (importmap_path = destination.join("config/importmap.rb")).exist?
-          append_to_file importmap_path.to_s, %(pin "trix"\n)
-        end
-      end
-
-      def append_action_text_dependency
+      def append_javascript_dependencies
         destination = Pathname(destination_root)
 
         if (application_javascript_path = destination.join("app/javascript/application.js")).exist?
@@ -68,16 +66,6 @@ module ActionText
 
       def create_actiontext_files
         template "actiontext.css", "app/assets/stylesheets/actiontext.css"
-
-        unless destination.join("app/assets/application.css").exist?
-          if (stylesheets = Dir.glob "#{destination_root}/app/assets/stylesheets/application.*.{scss,css}").length > 0
-            insert_into_file stylesheets.first.to_s, %(@import 'actiontext.css';)
-          else
-            say <<~INSTRUCTIONS, :green
-              To use the Action Text editor, you must require 'app/assets/stylesheets/actiontext.css' in your base stylesheet.
-            INSTRUCTIONS
-          end
-        end
 
         gem_root = "#{__dir__}/../../../.."
 

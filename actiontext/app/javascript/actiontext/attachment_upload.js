@@ -1,10 +1,10 @@
 import { DirectUpload, dispatchEvent } from "@rails/activestorage"
 
 export class AttachmentUpload {
-  constructor(delegate, file) {
-    this.delegate = delegate
-    this.file = file
-    this.directUpload = new DirectUpload(file, this.directUploadUrl, this)
+  constructor(attachment, element) {
+    this.attachment = attachment
+    this.element = element
+    this.directUpload = new DirectUpload(attachment.file, this.directUploadUrl, this)
   }
 
   start() {
@@ -102,16 +102,10 @@ export class AttachmentUpload {
   }
 
   get directUploadUrl() {
-    return this.delegate.directUploadUrl
+    return this.element.dataset.directUploadUrl
   }
 
   get blobUrlTemplate() {
-    return this.delegate.blobUrlTemplate
-  }
-}
-
-function notify(object, methodName, ...messages) {
-  if (object && typeof object[methodName] == "function") {
-    return object[methodName](...messages)
+    return this.element.dataset.blobUrlTemplate
   }
 }

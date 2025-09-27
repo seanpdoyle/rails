@@ -27,16 +27,12 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
     FileUtils.touch("#{destination_root}/package.json")
 
     run_generator_instance
-    assert_match %r"yarn add trix", @run_commands.join("\n")
-    assert_match %r"yarn add @rails/actiontext", @run_commands.join("\n")
+    assert_match %r"yarn add trix @rails/actiontext", @run_commands.join("\n")
   end
 
   test "throws warning for missing entry point" do
     FileUtils.rm("#{destination_root}/app/javascript/application.js")
-
-    output = run_generator_instance
-    assert_match "You must import the @rails/actiontext JavaScript module", output
-    assert_match "You must import the trix JavaScript module", output
+    assert_match "You must import the @rails/actiontext, trix, and trix/actiontext JavaScript modules", run_generator_instance
   end
 
   test "imports JavaScript dependencies in application.js" do
@@ -45,6 +41,7 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
     assert_file "app/javascript/application.js" do |content|
       assert_match %r"^#{Regexp.escape 'import "@rails/actiontext"'}", content
       assert_match %r"^#{Regexp.escape 'import "trix"'}", content
+      assert_match %r"^#{Regexp.escape 'import "trix/actiontext"'}", content
     end
   end
 
@@ -54,6 +51,7 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
     assert_file "config/importmap.rb" do |content|
       assert_match %r|pin "@rails/actiontext"|, content
       assert_match %r|pin "trix"|, content
+      assert_match %r|pin "trix/actiontext", to: "trix/actiontext.esm.js"|, content
     end
   end
 
