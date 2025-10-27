@@ -9,16 +9,16 @@ module ActionText
 
     attr_reader :options
 
-    def initialize(options)
+    def initialize(options = {})
       @options = options
     end
 
     def to_action_text_html(content)
-      content.to_html
+      content.fragment.to_html
     end
 
     def to_editor_html(content)
-      content.to_html
+      content.fragment.to_html
     end
 
     def editor_name
@@ -27,6 +27,10 @@ module ActionText
 
     def editor_tag(...)
       Tag.new(editor_name, ...)
+    end
+
+    def canonicalize_fragment(fragment) # :nodoc:
+      fragment
     end
   end
 

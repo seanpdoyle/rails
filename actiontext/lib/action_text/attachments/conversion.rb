@@ -11,7 +11,7 @@ module ActionText
 
       class_methods do
         def fragment_by_converting_editor_attachments(content)
-          RichText.editor.to_action_text_html(content)
+          RichText.editor.canonicalize_fragment(content.fragment)
         end
       end
 

@@ -3,10 +3,7 @@
 module ActionText
   class Editor::TrixEditor < Editor # :nodoc:
     def to_action_text_html(content)
-      Fragment.wrap(content.fragment).replace(TrixAttachment::SELECTOR) do |node|
-        trix_attachment = TrixAttachment.new(node)
-        Attachment.from_attributes(trix_attachment.attributes)
-      end.to_html
+      canonicalize_fragment(content.fragment).to_html
     end
 
     def to_editor_html(content)
@@ -20,7 +17,16 @@ module ActionText
       Tag.new(editor_name, ...)
     end
 
+    def canonicalize_fragment(fragment) # :nodoc:
+      fragment.replace(TrixAttachment::SELECTOR, &method(:from_trix_attachment))
+    end
+
     private
+      def from_trix_attachment(node)
+        trix_attachment = TrixAttachment.new(node)
+        Attachment.from_attributes(trix_attachment.attributes)
+      end
+
       def to_trix_attachment(node)
         attachment_attributes = node.attributes
         TrixAttachment.from_attributes(attachment_attributes)
