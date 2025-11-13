@@ -2,18 +2,17 @@
 
 module ActionText
   class Editor::TrixEditor < Editor # :nodoc:
-    def to_action_text_html(content)
-      Fragment.wrap(content.fragment).replace(TrixAttachment::SELECTOR) do |node|
+    def as_canonical(editable_content)
+      Fragment.wrap(editable_content.fragment).replace(TrixAttachment::SELECTOR) do |node|
         trix_attachment = TrixAttachment.new(node)
         Attachment.from_attributes(trix_attachment.attributes)
-      end.to_html
+      end
     end
 
-    def to_editor_html(content)
-      content
+    def as_editable(canonical_content)
+      canonical_content
         .render_attachments(&:to_editor_attachment)
         .fragment.replace(Attachment.tag_name, &method(:to_trix_attachment))
-        .to_html
     end
 
     def editor_tag(...)

@@ -137,11 +137,11 @@ module ActionText
     deprecate :to_trix_html, deprecator: ActionText.deprecator
 
     def to_editor_html # :nodoc:
-      RichText.editor.to_editor_html(self)
+      RichText.editor.as_editable(self).to_html
     end
 
     def to_html
-      RichText.editor.to_action_text_html(self)
+      fragment.to_html
     end
 
     def to_rendered_html_with_layout

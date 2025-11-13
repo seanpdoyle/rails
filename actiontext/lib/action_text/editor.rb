@@ -13,12 +13,12 @@ module ActionText
       @options = options
     end
 
-    def to_action_text_html(content)
-      content.to_html
+    def as_canonical(editable_content)
+      editable_content
     end
 
-    def to_editor_html(content)
-      content.to_html
+    def as_editable(canonical_content)
+      canonical_content
     end
 
     def editor_name
