@@ -961,6 +961,19 @@ module ActionController
       self
     end
 
+    # Reads the value from `key`, yields it to the block, then merges that the
+    # returned value into a new `ActionController::Parameters` instance.
+    def rewrite(key, &block)
+      merge(key => block.call(self[key]))
+    end
+
+    # Reads the value from `key`, yields it to the block, then merges the
+    # returned value into the current `ActionController::Parameters` instance.
+    def rewrite!(key, &block)
+      merge!(key => block.call(self[key]))
+      self
+    end
+
     # Deletes a key-value pair from `Parameters` and returns the value. If `key` is
     # not found, returns `nil` (or, with optional code block, yields `key` and
     # returns the result). This method is similar to #extract!, which returns the

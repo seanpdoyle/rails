@@ -1,3 +1,19 @@
+*   Add `ActionController::Parameters#rewrite!` and `#rewrite` for modifying values inline
+
+    ```ruby
+    params = ActionController::Parameters.new(
+      person: {
+        profile: "gid://app/Profile/1"
+      }
+    )
+    permitted = params
+      .expect(person: [:profile])
+      .rewrite(:profile) { |gid| GlobalID::Locator.locate(gid) }
+    permitted # => #<ActionController::Parameters {"profile"=>#<Profile id: 1>} permitted: true>
+    ```
+
+    *Sean Doyle*
+
 *   Add `ActionController::Parameters#fetch_values` for fetching multiple parameter values
 
     ```ruby

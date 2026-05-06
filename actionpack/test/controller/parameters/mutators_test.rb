@@ -189,6 +189,51 @@ class ParametersMutatorsTest < ActiveSupport::TestCase
     assert_not_predicate @params.compact_blank!, :permitted?
   end
 
+  test "rewrite yields the value to a block returns a new instance" do
+    @params.permit! => { person: { age: } }
+    old_params = @params
+    new_params = @params.rewrite(:person) { |hash| hash.deep_transform_keys(&:upcase) }
+
+    assert_kind_of ActionController::Parameters, new_params
+    assert_equal age, new_params.dig(:person, :AGE)
+    assert_not_same old_params, new_params
+  end
+
+  test "rewrite! yields the value to a block and mutates the instance" do
+    @params.permit! => { person: { age: } }
+    old_params = @params
+    new_params = @params.rewrite!(:person) { |hash| hash.deep_transform_keys(&:upcase) }
+
+    assert_equal age, new_params.dig(:person, :AGE)
+    assert_same old_params, new_params
+  end
+
+  test "rewrite can be chained" do
+    @params.permit! => { person: { age: } }
+    new_params = @params.require(:person).permit(:age).rewrite(:age) { |age| age.to_i * 100 }
+
+    assert_kind_of ActionController::Parameters, new_params
+    assert_equal age.to_i * 100, new_params.fetch(:age)
+  end
+
+  test "rewrite! retains permitted status" do
+    @params.permit!
+    assert_predicate @params.rewrite!(:person, &:itself), :permitted?
+  end
+
+  test "rewrite! retains unpermitted status" do
+    assert_not_predicate @params.rewrite!(:person, &:itself), :permitted?
+  end
+
+  test "rewrite retains permitted status" do
+    @params.permit!
+    assert_predicate @params.rewrite(:person, &:itself), :permitted?
+  end
+
+  test "rewrite retains unpermitted status" do
+    assert_not_predicate @params.rewrite(:person, &:itself), :permitted?
+  end
+
   test "to_h returns an ActiveSupport::HashWithIndifferentAccess" do
     @params.permit!
     params_hash = @params.to_h
