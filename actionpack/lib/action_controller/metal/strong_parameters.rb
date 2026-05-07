@@ -963,14 +963,28 @@ module ActionController
 
     # Reads the value from `key`, yields it to the block, then merges that the
     # returned value into a new `ActionController::Parameters` instance.
-    def rewrite(key, &block)
-      merge(key => block.call(self[key]))
+    def rewrite(values, &block)
+      case values
+      when Symbol, String
+        values = { values => block }
+      end
+
+      other_hash = values.to_h { |key, callable| [key, callable.call(self[key])] }
+
+      merge(other_hash)
     end
 
     # Reads the value from `key`, yields it to the block, then merges the
     # returned value into the current `ActionController::Parameters` instance.
-    def rewrite!(key, &block)
-      merge!(key => block.call(self[key]))
+    def rewrite!(values, &block)
+      case values
+      when Symbol, String
+        values = { values => block }
+      end
+
+      other_hash = values.to_h { |key, callable| [key, callable.call(self[key])] }
+
+      merge!(other_hash)
       self
     end
 

@@ -199,10 +199,33 @@ class ParametersMutatorsTest < ActiveSupport::TestCase
     assert_not_same old_params, new_params
   end
 
+  test "rewrite yields the value to a Hash of callables and returns a new instance" do
+    @params.permit! => { person: { age: } }
+    old_params = @params
+    new_params = @params.rewrite(
+      person: ->(person) { person.deep_transform_keys(&:upcase) }
+    )
+
+    assert_kind_of ActionController::Parameters, new_params
+    assert_equal age, new_params.dig(:person, :AGE)
+    assert_not_same old_params, new_params
+  end
+
   test "rewrite! yields the value to a block and mutates the instance" do
     @params.permit! => { person: { age: } }
     old_params = @params
     new_params = @params.rewrite!(:person) { |hash| hash.deep_transform_keys(&:upcase) }
+
+    assert_equal age, new_params.dig(:person, :AGE)
+    assert_same old_params, new_params
+  end
+
+  test "rewrite! yields values to a Hash of callables and mutates the instance" do
+    @params.permit! => { person: { age: } }
+    old_params = @params
+    new_params = @params.rewrite!(
+      person: ->(person) { person.deep_transform_keys(&:upcase) }
+    )
 
     assert_equal age, new_params.dig(:person, :AGE)
     assert_same old_params, new_params
