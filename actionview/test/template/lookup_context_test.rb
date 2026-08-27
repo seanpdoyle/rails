@@ -18,6 +18,24 @@ class LookupContextTest < ActiveSupport::TestCase
     I18n.locale = :en
   end
 
+  # Counts how often it is asked, so that a test can tell a remembered answer
+  # from one that was resolved again.
+  def counting_resolver(hash)
+    Class.new(ActionView::FixtureResolver) do
+      attr_reader :finds
+
+      def initialize(...)
+        @finds = 0
+        super
+      end
+
+      def find(...)
+        @finds += 1
+        super
+      end
+    end.new(hash)
+  end
+
   test "allows to override default_formats with ActionView::Base.default_formats" do
     formats = ActionView::Base.default_formats
     ActionView::Base.default_formats = [:foo, :bar]
@@ -191,6 +209,49 @@ class LookupContextTest < ActiveSupport::TestCase
     assert @lookup_context.cache
 
     assert_not_equal template, old_template
+  end
+
+  test "resolves a template once and reuses the answer" do
+    @lookup_context = build_lookup_context(counting_resolver("test/_foo.erb" => "Foo"), {})
+
+    template = @lookup_context.find("foo", %w(test), true)
+
+    assert_equal 1, @lookup_context.view_paths.first.finds
+    assert_same template, @lookup_context.find("foo", %w(test), true)
+    assert_equal 1, @lookup_context.view_paths.first.finds
+  end
+
+  test "resolves again after the template caches are cleared" do
+    @lookup_context = build_lookup_context(counting_resolver("test/_foo.erb" => "Foo"), {})
+
+    @lookup_context.find("foo", %w(test), true)
+    ActionView::LookupContext::DetailsKey.clear
+    @lookup_context.find("foo", %w(test), true)
+
+    assert_equal 2, @lookup_context.view_paths.first.finds
+  end
+
+  test "resolves again after the view paths change" do
+    resolver = counting_resolver("test/_foo.erb" => "Foo")
+    @lookup_context = build_lookup_context(resolver, {})
+
+    @lookup_context.find("foo", %w(test), true)
+    @lookup_context.prepend_view_paths([ ActionView::FixtureResolver.new({}) ])
+    @lookup_context.find("foo", %w(test), true)
+
+    assert_equal 2, resolver.finds
+  end
+
+  test "does not remember that a template was missing" do
+    resolver = counting_resolver({})
+    @lookup_context = build_lookup_context(resolver, {})
+
+    assert_nil @lookup_context.find("foo", %w(test), true)
+
+    resolver.data["test/_foo.erb"] = "Foo"
+    resolver.clear_cache
+
+    assert_equal "Foo", @lookup_context.find("foo", %w(test), true).source
   end
 
   test "responds to #prefixes" do

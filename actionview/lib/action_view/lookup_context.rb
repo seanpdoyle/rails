@@ -57,6 +57,15 @@ module ActionView
     class DetailsKey # :nodoc:
       alias :eql? :equal?
 
+      # Bumped every time the template caches are dropped, so that anything
+      # holding on to the result of a lookup can tell that its answer went
+      # stale -- the development reloader calls .clear when a template changes.
+      @generation = 0
+
+      class << self
+        attr_reader :generation
+      end
+
       def self.digest_cache(details)
         digest_cache_store.compute_if_absent(details_cache_key(details)) { Concurrent::Map.new }
       end
@@ -80,6 +89,7 @@ module ActionView
         ActionView::LookupContext.reset_view_context_class
         details_keys.clear
         digest_cache_store.clear
+        @generation += 1
       end
 
       def self.digest_caches
@@ -134,6 +144,7 @@ module ActionView
         @details = @details.dup if @digest_cache || @details_key
         @digest_cache = nil
         @details_key = nil
+        @resolved_templates = nil
         @details[key] = value
       end
     end
@@ -143,15 +154,23 @@ module ActionView
       attr_reader :view_paths, :html_fallback_for_js
 
       def find(name, prefixes = [], partial = false, keys = [], options = {})
-        name, prefixes = normalize_name(name, prefixes)
-        details, details_key = detail_args_for(options)
-        @view_paths.find(name, prefixes, partial, details, details_key, keys)
+        if (resolved = resolved_templates)
+          by_name = ((resolved[options] ||= {})[name] ||= {})
+          by_prefixes = ((by_name[partial] ||= {})[prefixes] ||= {})
+          by_prefixes[keys] ||= _find(name, prefixes, partial, keys, options)
+        else
+          _find(name, prefixes, partial, keys, options)
+        end
       end
 
       def find!(name, prefixes = [], partial = false, keys = [], options = {})
-        name, prefixes = normalize_name(name, prefixes)
-        details, details_key = detail_args_for(options)
-        @view_paths.find!(name, prefixes, partial, details, details_key, keys)
+        find(name, prefixes, partial, keys, options) || begin
+          # Only reached when there is nothing to find, so pay for the arguments
+          # the exception wants at the point we already know we are raising.
+          name, prefixes = normalize_name(name, prefixes)
+          details, details_key = detail_args_for(options)
+          @view_paths.find!(name, prefixes, partial, details, details_key, keys)
+        end
       end
 
       def find_all(name, prefixes = [], partial = false, keys = [], options = {})
@@ -179,10 +198,12 @@ module ActionView
       end
 
       def append_view_paths(paths)
+        @resolved_templates = nil
         @view_paths = build_view_paths(@view_paths.to_a + paths)
       end
 
       def prepend_view_paths(paths)
+        @resolved_templates = nil
         @view_paths = build_view_paths(paths + @view_paths.to_a)
       end
 
@@ -231,6 +252,34 @@ module ActionView
         end
       end
 
+      def _find(name, prefixes, partial, keys, options)
+        name, prefixes = normalize_name(name, prefixes)
+        details, details_key = detail_args_for(options)
+        @view_paths.find(name, prefixes, partial, details, details_key, keys)
+      end
+
+      # Resolving a template means hashing the requested details, normalizing
+      # the name against the prefixes and asking each resolver in turn. That is
+      # all bookkeeping over caches that already exist further down, and it
+      # repeats verbatim every time the same partial is rendered -- once per
+      # element of a collection, say -- so remember what came back, keyed by
+      # everything that went into asking.
+      #
+      # Nothing is remembered while the cache is off, which is what
+      # #disable_cache exists to say, and a miss is not remembered at all, so a
+      # template that appears later is still found.
+      def resolved_templates
+        return unless @cache
+
+        generation = DetailsKey.generation
+        unless @resolved_templates && @resolved_templates_generation == generation
+          @resolved_templates_generation = generation
+          @resolved_templates = {}
+        end
+
+        @resolved_templates
+      end
+
       # Fix when prefix is specified as part of the template name
       def normalize_name(name, prefixes)
         name = name.to_s
@@ -258,6 +307,8 @@ module ActionView
     def initialize(view_paths, details = {}, prefixes = [])
       @details_key = nil
       @digest_cache = nil
+      @resolved_templates = nil
+      @resolved_templates_generation = nil
       @cache = true
       @prefixes = prefixes
 
